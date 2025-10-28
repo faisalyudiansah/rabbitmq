@@ -17,5 +17,5 @@ func (s *Server) provider() {
 func (s *Server) SetupRepository() {}
 func (s *Server) SetupUseCase()    {}
 func (s *Server) SetupController() {
-	JobController = controller.NewJobController(s.pub)
+	JobController = controller.NewJobController(s.publisherMQ)
 }

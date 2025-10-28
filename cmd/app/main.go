@@ -7,7 +7,6 @@ import (
 	"background-job-service/pkg/mq"
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,12 +33,7 @@ func main() {
 	pub := mq.NewPublisher(ch, q.Name)
 
 	g := gin.Default()
-	server.NewServer(g, pub, cfg)
-
-	srv := &http.Server{
-		Addr:    ":" + cfg.AppPort,
-		Handler: g,
-	}
+	srv := server.NewServer(g, pub, cfg)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err.Error() != "http: Server closed" {

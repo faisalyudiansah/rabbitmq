@@ -3,28 +3,32 @@ package server
 import (
 	"background-job-service/config"
 	"background-job-service/pkg/mq"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	g   *gin.Engine
-	pub *mq.Publisher
-	cfg *config.Config
+	gin         *gin.Engine
+	publisherMQ *mq.Publisher
+	config      *config.Config
 }
 
 func NewServer(
 	g *gin.Engine,
 	pub *mq.Publisher,
 	cfg *config.Config,
-) *Server {
+) *http.Server {
 	s := &Server{
-		g:   g,
-		pub: pub,
-		cfg: cfg,
+		gin:         g,
+		publisherMQ: pub,
+		config:      cfg,
 	}
 
 	s.provider()
 
-	return s
+	return &http.Server{
+		Addr:    ":" + cfg.AppPort,
+		Handler: g,
+	}
 }
