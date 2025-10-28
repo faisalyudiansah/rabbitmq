@@ -2,6 +2,7 @@ package controller
 
 import (
 	"background-job-service/pkg/mq"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,9 +24,13 @@ func NewJobController(pub *mq.Publisher) *JobController {
 func (ctr *JobController) CreateJobController(c *gin.Context) {
 	var payload map[string]any
 	if err := c.BindJSON(&payload); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	_ = ctr.pub.PublishMessage(payload)
-	c.JSON(200, gin.H{"status": "queued"})
+	err := ctr.pub.PublishMessage(payload)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"status": "queued"})
 }
