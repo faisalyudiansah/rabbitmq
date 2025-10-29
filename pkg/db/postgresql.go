@@ -2,12 +2,15 @@ package db
 
 import (
 	"background-job-service/config"
+	dbLogger "background-job-service/pkg/logger/db"
 	"database/sql"
 	"fmt"
 	"log"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/tracelog"
 )
 
 func NewPostgreSQL(cfg *config.Config) *sql.DB {
@@ -22,15 +25,18 @@ func NewPostgreSQL(cfg *config.Config) *sql.DB {
 		cfg.Zone,
 	)
 
-	db, err := sql.Open("pgx", dsn)
+	pgxConfig, err := pgx.ParseConfig(dsn)
 	if err != nil {
-		log.Fatalf("error initializing database: %v", err)
+		log.Fatalf("error parsing config: %v", err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatalf("error connecting to database: %v", err)
+	// Tambahkan tracer custom
+	pgxConfig.Tracer = &tracelog.TraceLog{
+		Logger:   &dbLogger.PgxLogger{},
+		LogLevel: tracelog.LogLevelTrace, // Ganti ke Trace kalau mau semua query
 	}
+
+	db := stdlib.OpenDB(*pgxConfig)
 
 	db.SetMaxIdleConns(cfg.DBMaxIdleConn)
 	db.SetMaxOpenConns(cfg.DBMaxOpenConn)

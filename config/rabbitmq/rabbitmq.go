@@ -34,6 +34,6 @@ func DeclareQueue(ch *amqp.Channel, queueName string) (amqp.Queue, error) {
 	if err != nil {
 		return q, fmt.Errorf("failed to declare queue: %w", err)
 	}
-	log.Println("✅ Queue declared:", q.Name)
+	log.Println("Queue declared:", q.Name)
 	return q, nil
 }

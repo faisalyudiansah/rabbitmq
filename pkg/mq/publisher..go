@@ -32,9 +32,9 @@ func (p *Publisher) PublishMessage(data any) error {
 		},
 	)
 	if err != nil {
-		log.Println("❌ Failed to publish message:", err)
+		log.Println("Failed to publish message:", err)
 		return err
 	}
-	log.Println("📤 Message published:", string(body))
+	log.Println("Message published:", string(body))
 	return nil
 }

@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 
-	log.Println("👷 Worker is running...")
+	log.Println("Worker is running...")
 
 	forever := make(chan bool)
 
