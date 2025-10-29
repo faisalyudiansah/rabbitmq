@@ -30,10 +30,9 @@ func NewPostgreSQL(cfg *config.Config) *sql.DB {
 		log.Fatalf("error parsing config: %v", err)
 	}
 
-	// Tambahkan tracer custom
 	pgxConfig.Tracer = &tracelog.TraceLog{
 		Logger:   &dbLogger.PgxLogger{},
-		LogLevel: tracelog.LogLevelTrace, // Ganti ke Trace kalau mau semua query
+		LogLevel: tracelog.LogLevelTrace,
 	}
 
 	db := stdlib.OpenDB(*pgxConfig)
