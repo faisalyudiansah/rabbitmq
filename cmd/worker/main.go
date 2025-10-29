@@ -40,7 +40,7 @@ func main() {
 		for msg := range msgs {
 			var job map[string]any
 			_ = json.Unmarshal(msg.Body, &job)
-			log.Printf("🪶 Received job: %v\n", job)
+			log.Printf("Received job: %v\n", job)
 			// TODO: simpan ke DB atau jalankan proses
 		}
 	}()
