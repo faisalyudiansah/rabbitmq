@@ -4,9 +4,11 @@ import (
 	"background-job-service/config"
 	"background-job-service/config/rabbitmq"
 	"background-job-service/config/server"
+	"background-job-service/pkg/db"
 	"background-job-service/pkg/mq"
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,11 +32,26 @@ func main() {
 		log.Fatalf("Failed to declare queue: %v", err)
 	}
 
+	db := db.NewPostgreSQL(cfg)
+	defer db.Close()
+	if err != nil {
+		log.Fatalf("Failed to declare queue: %v", err)
+	}
+
 	pub := mq.NewPublisher(ch, q.Name)
 
 	g := gin.Default()
-	srv := server.NewServer(g, pub, cfg)
+	srv := server.NewServer(&server.ReqServer{
+		G:   g,
+		Pub: pub,
+		Cfg: cfg,
+		Db:  db,
+	})
 
+	GrafefullyaShutdown(srv, cfg)
+}
+
+func GrafefullyaShutdown(srv *http.Server, cfg *config.Config) {
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err.Error() != "http: Server closed" {
 			log.Fatalf("Server failed: %v", err)

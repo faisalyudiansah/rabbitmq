@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"background-job-service/internal/usecase"
 	"background-job-service/pkg/mq"
 	"net/http"
 
@@ -12,12 +13,14 @@ type JobControllerInterface interface {
 }
 
 type JobController struct {
-	pub *mq.Publisher
+	pub        *mq.Publisher
+	jobUseCase usecase.JobUseCaseInterface
 }
 
-func NewJobController(pub *mq.Publisher) *JobController {
+func NewJobController(pub *mq.Publisher, juc usecase.JobUseCaseInterface) *JobController {
 	return &JobController{
-		pub: pub,
+		pub:        pub,
+		jobUseCase: juc,
 	}
 }
 
@@ -27,10 +30,18 @@ func (ctr *JobController) CreateJobController(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err := ctr.pub.PublishMessage(payload)
+
+	jobID, err := ctr.jobUseCase.CreateJob(c, "generic_task", payload)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"status": "queued"})
+
+	err = ctr.pub.PublishMessage(map[string]any{"job_id": *jobID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"status": "queued", "job_id": jobID})
 }
