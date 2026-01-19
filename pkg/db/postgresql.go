@@ -22,7 +22,7 @@ func NewPostgreSQL(cfg *config.Config) *sql.DB {
 		cfg.DBName,
 		cfg.DBPort,
 		cfg.DBSSLMode,
-		cfg.Zone,
+		cfg.Timezone,
 	)
 
 	pgxConfig, err := pgx.ParseConfig(dsn)
