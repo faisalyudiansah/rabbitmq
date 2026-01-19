@@ -43,8 +43,8 @@ type BaseWorker struct {
 	WorkerLogger *WorkerLogger
 	Enabled      bool
 	RetryEnabled bool
-	MaxRetry     int
-	Concurrency  int
+	MaxRetry     uint8
+	Concurrency  uint8
 }
 
 func (b *BaseWorker) GetQueueName() string {
@@ -59,11 +59,11 @@ func (b *BaseWorker) IsRetryEnabled() bool {
 	return b.RetryEnabled
 }
 
-func (b *BaseWorker) GetMaxRetry() int {
+func (b *BaseWorker) GetMaxRetry() uint8 {
 	return b.MaxRetry
 }
 
-func (b *BaseWorker) GetConcurrency() int {
+func (b *BaseWorker) GetConcurrency() uint8 {
 	if b.Concurrency <= 0 {
 		return 1 // default concurrency
 	}

@@ -20,6 +20,7 @@ type Config struct {
 	DB
 	RabbitMQ
 	Logstash
+	Worker
 }
 
 type DB struct {
@@ -53,6 +54,17 @@ type Logstash struct {
 	Port              string
 	Timeout           uint8
 	TickerHealthCheck uint8
+}
+
+type Worker struct {
+	MultiPostingWorker
+}
+
+type MultiPostingWorker struct {
+	Enabled      bool
+	RetryEnabled bool
+	MaxRetry     uint8
+	Concurrency  uint8
 }
 
 func LoadConfig() *Config {
@@ -96,9 +108,28 @@ func LoadConfig() *Config {
 			Timeout:           mustGetEnvUint8(constant.LOGSTASH_TIMEOUT),
 			TickerHealthCheck: mustGetEnvUint8(constant.LOGSTASH_TICKER_HEALTHCHECK),
 		},
+		Worker: Worker{
+			MultiPostingWorker{
+				Enabled:      mustGetEnvBool(constant.WORKER_MULTI_POSTING_ENABLED),
+				RetryEnabled: mustGetEnvBool(constant.WORKER_MULTI_POSTING_RETRY_ENABLED),
+				MaxRetry:     mustGetEnvUint8(constant.WORKER_MULTI_POSTING_MAX_RETRY),
+				Concurrency:  mustGetEnvUint8(constant.WORKER_MULTI_POSTING_CONCURRENCY),
+			},
+		},
 	}
 
 	return cfg
+}
+
+func mustGetEnvBool(key string) bool {
+	valueStr := mustGetEnv(key)
+
+	value, err := strconv.ParseBool(valueStr)
+	if err != nil {
+		panic(fmt.Sprintf("Environment variable %s must be a boolean (true/false)", key))
+	}
+
+	return value
 }
 
 func mustGetEnv(key string) string {
