@@ -2,10 +2,8 @@ package main
 
 import (
 	"background-job-service/config"
-	"background-job-service/config/rabbitmq"
 	"background-job-service/config/server"
 	"background-job-service/pkg/db"
-	"background-job-service/pkg/mq"
 	"context"
 	"log"
 	"net/http"
@@ -20,30 +18,12 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 
-	conn, ch, err := rabbitmq.NewConnection(cfg.RabbitMQURL)
-	if err != nil {
-		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
-	}
-	defer conn.Close()
-	defer ch.Close()
-
-	q, err := rabbitmq.DeclareQueue(ch, cfg.RabbitMQQueue)
-	if err != nil {
-		log.Fatalf("Failed to declare queue: %v", err)
-	}
-
 	db := db.NewPostgreSQL(cfg)
 	defer db.Close()
-	if err != nil {
-		log.Fatalf("Failed to declare queue: %v", err)
-	}
-
-	pub := mq.NewPublisher(ch, q.Name)
 
 	g := gin.Default()
 	srv := server.NewServer(&server.ReqServer{
 		G:   g,
-		Pub: pub,
 		Cfg: cfg,
 		Db:  db,
 	})

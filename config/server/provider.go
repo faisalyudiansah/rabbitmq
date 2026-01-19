@@ -39,5 +39,5 @@ func (s *Server) SetupUseCase() {
 }
 
 func (s *Server) SetupController() {
-	JobController = controller.NewJobController(s.publisherMQ, JobUseCase)
+	JobController = controller.NewJobController(JobUseCase)
 }

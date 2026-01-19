@@ -2,7 +2,6 @@ package server
 
 import (
 	"background-job-service/config"
-	"background-job-service/pkg/mq"
 	"database/sql"
 	"net/http"
 
@@ -11,15 +10,13 @@ import (
 )
 
 type Server struct {
-	gin         *gin.Engine
-	publisherMQ *mq.Publisher
-	config      *config.Config
-	db          *sql.DB
+	gin    *gin.Engine
+	config *config.Config
+	db     *sql.DB
 }
 
 type ReqServer struct {
 	G   *gin.Engine
-	Pub *mq.Publisher
 	Cfg *config.Config
 	Db  *sql.DB
 }
@@ -33,10 +30,9 @@ func NewServer(req *ReqServer) *http.Server {
 	RegisterMiddleware(req.G, req.Cfg)
 
 	s := &Server{
-		gin:         req.G,
-		publisherMQ: req.Pub,
-		config:      req.Cfg,
-		db:          req.Db,
+		gin:    req.G,
+		config: req.Cfg,
+		db:     req.Db,
 	}
 
 	s.provider()

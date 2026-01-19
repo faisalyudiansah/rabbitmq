@@ -1,6 +1,7 @@
 package config
 
 import (
+	"background-job-service/pkg/constant"
 	"fmt"
 	"log"
 	"os"
@@ -10,10 +11,18 @@ import (
 )
 
 type Config struct {
+	AppName                 string
 	AppPort                 string
 	AppEnvironment          string
 	Timezone                string
-	Zone                    string
+	TimeoutGracefulShutdown uint8
+
+	DB
+	RabbitMQ
+	Logstash
+}
+
+type DB struct {
 	DBHost                  string
 	DBPort                  string
 	DBUser                  string
@@ -23,8 +32,27 @@ type Config struct {
 	DBMaxIdleConn           int
 	DBMaxOpenConn           int
 	DBMaxConnLifetimeMinute int
-	RabbitMQURL             string
-	RabbitMQQueue           string
+}
+
+type RabbitMQ struct {
+	Host                      string
+	Port                      string
+	User                      string
+	Password                  string
+	VHost                     string
+	HearthbeatInterval        uint8
+	HealthCheckInterval       uint8
+	ReconnectMaxRetries       uint8
+	ReconnectInterval         uint8
+	CircuitBreakerMaxFailures uint8
+	CircuitBreakerTimeout     uint8
+}
+
+type Logstash struct {
+	Host              string
+	Port              string
+	Timeout           uint8
+	TickerHealthCheck uint8
 }
 
 func LoadConfig() *Config {
@@ -33,21 +61,41 @@ func LoadConfig() *Config {
 	}
 
 	cfg := &Config{
-		AppPort:                 mustGetEnv("APP_PORT"),
-		AppEnvironment:          mustGetEnv("APP_ENVIRONMENT"),
-		Timezone:                mustGetEnv("TIMEZONE"),
-		Zone:                    mustGetEnv("ZONE"),
-		DBHost:                  mustGetEnv("DB_HOST"),
-		DBPort:                  mustGetEnv("DB_PORT"),
-		DBUser:                  mustGetEnv("DB_USER"),
-		DBPassword:              mustGetEnv("DB_PASSWORD"),
-		DBName:                  mustGetEnv("DB_NAME"),
-		DBSSLMode:               mustGetEnv("DB_SSLMODE"),
-		DBMaxIdleConn:           mustGetEnvInt("DB_MAX_IDLE_CONN"),
-		DBMaxOpenConn:           mustGetEnvInt("DB_MAX_OPEN_CONN"),
-		DBMaxConnLifetimeMinute: mustGetEnvInt("DB_CONN_MAX_LIFETIME"),
-		RabbitMQURL:             mustGetEnv("RABBITMQ_URL"),
-		RabbitMQQueue:           mustGetEnv("RABBITMQ_QUEUE"),
+		AppName:                 mustGetEnv(constant.APP_NAME),
+		AppPort:                 mustGetEnv(constant.APP_PORT),
+		AppEnvironment:          mustGetEnv(constant.APP_ENVIRONMENT),
+		Timezone:                mustGetEnv(constant.TIMEZONE),
+		TimeoutGracefulShutdown: mustGetEnvUint8(constant.TIMEOUT_GRACEFUL_SHUTDOWN),
+		DB: DB{
+			DBHost:                  mustGetEnv(constant.DB_HOST),
+			DBPort:                  mustGetEnv(constant.DB_PORT),
+			DBUser:                  mustGetEnv(constant.DB_USER),
+			DBPassword:              mustGetEnv(constant.DB_PASSWORD),
+			DBName:                  mustGetEnv(constant.DB_NAME),
+			DBSSLMode:               mustGetEnv(constant.DB_SSLMODE),
+			DBMaxIdleConn:           mustGetEnvInt(constant.DB_MAX_IDLE_CONN),
+			DBMaxOpenConn:           mustGetEnvInt(constant.DB_MAX_OPEN_CONN),
+			DBMaxConnLifetimeMinute: mustGetEnvInt(constant.DB_CONN_MAX_LIFETIME),
+		},
+		RabbitMQ: RabbitMQ{
+			Host:                      mustGetEnv(constant.RABBITMQ_HOST),
+			Port:                      mustGetEnv(constant.RABBITMQ_PORT),
+			User:                      mustGetEnv(constant.RABBITMQ_USER),
+			Password:                  mustGetEnv(constant.RABBITMQ_PASSWORD),
+			VHost:                     mustGetEnv(constant.RABBITMQ_VHOST),
+			HearthbeatInterval:        mustGetEnvUint8(constant.RABBITMQ_HEARTBEAT_INTERVAL),
+			HealthCheckInterval:       mustGetEnvUint8(constant.RABBITMQ_HEALTH_CHECK_INTERVAL),
+			ReconnectMaxRetries:       mustGetEnvUint8(constant.RABBITMQ_RECONNECT_MAX_RETRIES),
+			ReconnectInterval:         mustGetEnvUint8(constant.RABBITMQ_RECONNECT_INTERVAL),
+			CircuitBreakerMaxFailures: mustGetEnvUint8(constant.RABBITMQ_CIRCUIT_BREAKER_MAX_FAILURES),
+			CircuitBreakerTimeout:     mustGetEnvUint8(constant.RABBITMQ_CIRCUIT_BREAKER_TIMEOUT),
+		},
+		Logstash: Logstash{
+			Host:              mustGetEnv(constant.LOGSTASH_HOST),
+			Port:              mustGetEnv(constant.LOGSTASH_PORT),
+			Timeout:           mustGetEnvUint8(constant.LOGSTASH_TIMEOUT),
+			TickerHealthCheck: mustGetEnvUint8(constant.LOGSTASH_TICKER_HEALTHCHECK),
+		},
 	}
 
 	return cfg
@@ -59,6 +107,17 @@ func mustGetEnv(key string) string {
 		panic(fmt.Sprintf("Environment variable %s not found", key))
 	}
 	return value
+}
+
+func mustGetEnvUint8(key string) uint8 {
+	valueStr := mustGetEnv(key)
+
+	value64, err := strconv.ParseUint(valueStr, 10, 8)
+	if err != nil {
+		panic(fmt.Sprintf("Environment variable %s must be a uint8", key))
+	}
+
+	return uint8(value64)
 }
 
 func mustGetEnvInt(key string) int {
